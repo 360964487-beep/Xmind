@@ -1,7 +1,7 @@
-const CACHE='jishi-pwa-v4';
+const CACHE='jishi-pwa-v5';
 const BASE=new URL('./',self.location.href);
-const FILES=['./','index.html','icon.svg','manifest.webmanifest','icons/icon-192-rounded.png','icons/icon-512-rounded.png','icons/maskable-512.png','icons/apple-touch-icon-rounded.png'].map(path=>new URL(path,BASE).href);
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)))});
+const FILES=['./','index.html','icon.svg','manifest.webmanifest','icons/icon-192-rounded.png','icons/icon-512-rounded.png','icons/apple-touch-icon-rounded.png'].map(path=>new URL(path,BASE).href);
+self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('jishi-pwa-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',event=>{
  const request=event.request,url=new URL(request.url);
