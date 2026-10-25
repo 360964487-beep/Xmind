@@ -236,18 +236,30 @@ function render(){measure(tree);$('#nodes').replaceChildren();$('#map>svg').repl
  path.dataset.branch=branch;$('#map>svg').append(path);
 }}place(tree,12+rootOffset.x,32+rootOffset.y,0);$('#map').style.width=max+'px';$('#map').style.height=(tree.span+120+rootOffset.y)+'px';$('#map').style.zoom=scale;$('#map>svg').setAttribute('width',max);$('#map>svg').setAttribute('height',tree.span+120+rootOffset.y);$('#zoom').textContent=Math.round(scale*100)+'%'}
 function focus(){document.querySelector(`[data-id="${selected}"]`)?.focus()}function edit(n){if(editing)return;editing=true;let el=document.querySelector(`[data-id="${n.id}"]`),input=document.createElement('textarea');input.value=n.text;input.rows=Math.max(1,n.text.split('\n').length);input.wrap='off';input.setAttribute('aria-label','编辑节点文字');el.replaceChildren(input);input.focus();input.select();let done=false;function finish(cancel=false){if(done)return;done=true;if(!cancel)n.text=input.value.trim()||'未命名';editing=false;selected=n.id;persist();render();focus()}input.onblur=()=>finish();input.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();finish()}if(e.key==='Escape'){e.preventDefault();finish(true)}}}function add(sibling){let r=find(selected);if(!r)return;let p=sibling?r.p:r.n;if(!p)return toast('中心主题没有同级节点');let n=make('新节点');p.collapsed=false;if(sibling)p.children.splice(p.children.indexOf(r.n)+1,0,n);else p.children.push(n);selected=n.id;persist();render();edit(n)}function remove(){let r=find(selected);if(!r?.p)return toast('中心主题不能删除');if(!confirm('删除此节点及其子节点？'))return;r.p.children=r.p.children.filter(n=>n.id!==selected);selected=r.p.id;persist();render();focus()}
+function buildSaveFilename(account,now=new Date()){
+ const safe=account.trim().replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').replace(/[. ]+$/g,'').slice(0,80)||'账户';
+ const parts=new Intl.DateTimeFormat('en',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+ const value=type=>parts.find(part=>part.type===type).value;
+ return safe+'-'+value('year')+'-'+value('month')+'-'+value('day')+'.json';
+}
 async function save(){
 if(editing)document.activeElement.blur();
+let previousAccount='';try{previousAccount=localStorage.getItem('jishi-save-account')||''}catch{}
+const account=prompt('账户名称（保存文件将以“账户名-日期”命名）',previousAccount);
+if(account===null)return;
+if(!account.trim()){toast('请输入账户名称');return}
+try{localStorage.setItem('jishi-save-account',account.trim())}catch{}
+const filename=buildSaveFilename(account);
 const content=JSON.stringify(workspaceData(),null,2);
 if(typeof window.showSaveFilePicker==='function'){
  try{
-  const handle=await window.showSaveFilePicker({suggestedName:'记事-全部文件.json',types:[{description:'记事文件集合',accept:{'application/json':['.json']}}]});
+  const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'记事文件集合',accept:{'application/json':['.json']}}]});
   const writable=await handle.createWritable();
   await writable.write(content);await writable.close();toast('全部 '+workspace.documents.length+' 个文件已保存');
  }catch(error){if(error.name!=='AbortError')toast('保存失败：'+(error.message||'请重试'))}
  return;
 }
-const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='记事-全部文件.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('当前浏览器使用下载方式保存，位置由浏览器下载设置决定');
+const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('当前浏览器使用下载方式保存，位置由浏览器下载设置决定');
 }$('#save').onclick=save;$('#new').onclick=newDocument;$('#open').onclick=()=>$('#file').click();$('#file').onchange=async event=>{
  const file=event.target.files[0];if(!file)return;
  try{
