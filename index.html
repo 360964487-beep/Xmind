@@ -52,6 +52,8 @@ body[data-theme="dopamine"] .node[data-branch="0"]{--branch:#b92f78}body[data-th
 body[data-theme="dopamine"] .node{color:var(--branch);border-bottom-color:var(--branch)}body[data-theme="dopamine"] .node.selected{color:var(--branch);border-bottom-color:var(--branch);background:transparent}
 body[data-theme="dopamine"] #map>svg path[data-branch="0"]{stroke:#e28db9}body[data-theme="dopamine"] #map>svg path[data-branch="1"]{stroke:#e7b268}body[data-theme="dopamine"] #map>svg path[data-branch="2"]{stroke:#b69bdf}body[data-theme="dopamine"] #map>svg path[data-branch="3"]{stroke:#79c8b7}body[data-theme="dopamine"] #map>svg path[data-branch="4"]{stroke:#91b9e8}
 .brand-icon{background:transparent!important;border:0!important}.brand-icon img{display:block;border-radius:7px}button[hidden]{display:none!important}#install-app{color:var(--t-accent);white-space:nowrap}@media(max-width:500px){header{gap:2px;padding:0 8px}header strong{margin-right:4px}header button{padding:8px 6px}.theme-label{display:none}#theme{margin-left:auto;max-width:75px}}</style><header><strong><span class="brand-icon"><img src="icon.svg" alt="" width="30" height="30"></span>记事</strong><button id="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新建</button><button id="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h7l2 3h9l-3 9H3z"/><path d="M3 7V5h7l2 2h7v3"/></svg>打开</button><button id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12l3 3v13H4V4z"/><path d="M8 4v6h8V4M8 20v-7h8v7"/></svg>保存</button><button id="install-app" type="button">安装</button><label class="theme-label" for="theme">主题</label><select id="theme" aria-label="切换主题"><option value="sky">晴空</option><option value="paper">素纸</option><option value="forest">青竹</option><option value="sand">暖砂</option><option value="violet">暮紫</option><option value="night">夜墨</option><option value="dopamine">多巴胺</option></select><span id="status" role="status">示例数据 · 仅保存在本机</span></header><main aria-label="记事画布"><div id="map"><svg aria-hidden="true"></svg><div id="nodes" role="tree" aria-label="记事节点"></div></div></main><footer><span class="help">双击编辑 · Tab 子节点 · Enter 同级 · Delete 删除 · 右键菜单 · 拖动主节点移动整图 · Ctrl＋滚轮缩放</span><span><button id="minus" aria-label="缩小">−</button><span id="zoom">100%</span><button id="plus" aria-label="放大">＋</button><button id="reset">复位</button></span></footer><input id="file" type="file" accept=".json"><div id="toast" role="status"></div><div id="context" role="menu" aria-label="节点操作" hidden></div><dialog id="move-dialog"><form method="dialog"><label for="move-target">移入哪个节点？</label><select id="move-target"></select><div class="actions"><button value="cancel">取消</button><button id="move-confirm" class="primary" value="confirm">移动</button></div></form></dialog><script>
+async function startApp(){
+
 const $=s=>document.querySelector(s);let selected='root',scale=1,editing=false,rootOffset={x:0,y:0};const make=(text,children=[])=>({id:crypto.randomUUID(),text,children});let tree={id:'root',text:'记事',children:[make('苹果手机 ID',[make('daily@example.com',[make('示例密码 123456')]),make('backup@example.com')]),make('微软 Office',[make('work@example.com'),make('https://www.microsoft.com')]),make('VPN',[make('https://example.com'),make('账号：demo@example.com')]),make('眼镜',[make('右眼 400，左眼 350，瞳距 60')]),make('个人信息',[make('电话：138 0000 0000'),make('地址：示例路 24 号'),make('姓名：张三')]),make('GPT',[make('账号：ai@example.com'),make('API KEY：此处填写')])]};
 try{const saved=localStorage.getItem('minimal-notes');if(saved)tree=JSON.parse(saved)}catch{}function find(id,n=tree,p=null){if(n.id===id)return {n,p};for(const c of n.children){const r=find(id,c,n);if(r)return r}}function clean(n){return {id:n.id,text:n.text,collapsed:!!n.collapsed,children:n.children.map(clean)}}function persist(){try{localStorage.setItem('minimal-notes',JSON.stringify(clean(tree)));$('#status').textContent='已自动保存到此浏览器'}catch{$('#status').textContent='保存失败，请导出文件'}}function toast(t){$('#toast').textContent=t;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',2200)}
 const textMeasure=document.createElement('canvas').getContext('2d');
@@ -163,6 +165,34 @@ if('serviceWorker' in navigator&&window.isSecureContext){
   if(reg.active)ready();else reg.addEventListener('updatefound',()=>{const worker=reg.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='activated')ready()})});
  }).catch(()=>toast('离线缓存未成功，请联网刷新重试')));
 }
+
+}
+const instanceLock='jishi-single-window:'+new URL('./',location.href).pathname;
+let releaseInstance=null;
+function showWindowBlocked(message){
+ const cover=document.createElement('div');cover.id='single-window-cover';
+ cover.setAttribute('role','alert');
+ cover.style.cssText='position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#f8fafd;padding:24px;color:#33445c;font:16px "Microsoft YaHei",sans-serif';
+ const card=document.createElement('div');card.style.cssText='max-width:360px;text-align:center;line-height:1.8';
+ const icon=document.createElement('img');icon.src='icon.svg';icon.alt='';icon.width=64;icon.height=64;
+ const heading=document.createElement('h2');heading.textContent='记事已在另一个窗口打开';heading.style.fontSize='20px';
+ const text=document.createElement('p');text.textContent=message;
+ const retry=document.createElement('button');retry.textContent='重新检测';retry.style.cssText='background:#397bce;color:white;padding:10px 18px;margin:8px;border-radius:6px';retry.onclick=()=>location.reload();
+ const close=document.createElement('button');close.textContent='关闭此窗口';close.onclick=()=>{window.close();text.textContent='如果窗口没有自动关闭，请手动关闭此标签页。'};
+ card.append(icon,heading,text,retry,close);cover.append(card);document.body.append(cover);
+ document.querySelector('header').inert=true;document.querySelector('main').inert=true;document.querySelector('footer').inert=true;retry.focus();
+}
+if(navigator.locks){
+ navigator.locks.request(instanceLock,{mode:'exclusive',ifAvailable:true},async lock=>{
+  if(!lock){showWindowBlocked('请回到原窗口继续使用。关闭原窗口后，点击“重新检测”即可进入。');return}
+  const hold=new Promise(resolve=>{releaseInstance=resolve});
+  try{await startApp();await hold}catch(error){console.error('App startup failed',error);document.body.textContent='页面启动失败，请刷新重试。'}
+ });
+}else{
+ showWindowBlocked('当前浏览器不支持单窗口锁，请使用最新版 Edge 或 Chrome 打开。');
+}
+window.addEventListener('pagehide',()=>{releaseInstance?.();releaseInstance=null});
+window.addEventListener('pageshow',event=>{if(event.persisted)location.reload()});
 </script></html>
 
 

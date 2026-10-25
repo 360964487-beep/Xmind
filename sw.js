@@ -1,4 +1,4 @@
-const CACHE='jishi-pwa-v1';
+const CACHE='jishi-pwa-v2';
 const BASE=new URL('./',self.location.href);
 const FILES=['./','index.html','icon.svg','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/maskable-512.png','icons/apple-touch-icon.png'].map(path=>new URL(path,BASE).href);
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)))});

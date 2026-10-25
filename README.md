@@ -40,3 +40,7 @@ python -m http.server 8080
 发布时必须保留 manifest.webmanifest、sw.js 和 icons/ 目录。相对路径支持 GitHub Pages 的 /Xmind/ 子路径。新版本后台下载后，关闭所有应用窗口并重新打开即可应用更新；修改离线资源时同步递增 sw.js 的 CACHE 版本号。
 
 笔记仍保存在当前站点的本地浏览器存储中，安装不会将 localhost 数据自动迁移到 GitHub Pages。请先从原页面导出 JSON，再在新地址打开文件。
+
+## 单窗口限制
+
+使用浏览器 Web Locks 独占锁，同一浏览器与同一站点下仅允许一个窗口操作。重复打开的标签页或 PWA 窗口显示阻止页，不读写笔记；关闭原窗口后可重新检测。不同浏览器、用户配置文件和设备互不限制。
