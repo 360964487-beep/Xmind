@@ -1,4 +1,4 @@
-const CACHE='jishi-pwa-v2';
+const CACHE='jishi-pwa-v3';
 const BASE=new URL('./',self.location.href);
 const FILES=['./','index.html','icon.svg','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/maskable-512.png','icons/apple-touch-icon.png'].map(path=>new URL(path,BASE).href);
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)))});
@@ -11,4 +11,13 @@ self.addEventListener('fetch',event=>{
  }
  if(!FILES.includes(url.href))return;
  event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(request,copy)))}return response})));
+});
+
+self.addEventListener('message',event=>{
+ if(event.data?.type!=='JISHI_FOCUS_SELF'||!event.source?.id)return;
+ event.waitUntil((async()=>{
+  let focused=false;
+  try{const client=await self.clients.get(event.source.id);if(client&&new URL(client.url).pathname.startsWith(BASE.pathname)){const result=await client.focus();focused=result.focused}}catch{}
+  event.ports[0]?.postMessage({focused});
+ })());
 });

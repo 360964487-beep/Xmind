@@ -168,7 +168,37 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 }
 const instanceLock='jishi-single-window:'+new URL('./',location.href).pathname;
-let releaseInstance=null;
+let releaseInstance=null,isPrimaryWindow=false;
+const focusChannel=typeof BroadcastChannel==='function'?new BroadcastChannel(instanceLock+':focus'):null;
+let focusRequestId=null;
+async function focusPrimaryWindow(){
+ try{window.focus()}catch{}
+ if(document.hasFocus())return true;
+ const worker=navigator.serviceWorker?.controller;
+ if(!worker)return false;
+ return new Promise(resolve=>{
+  const channel=new MessageChannel();const timeout=setTimeout(()=>{channel.port1.close();resolve(false)},1500);
+  channel.port1.onmessage=event=>{clearTimeout(timeout);channel.port1.close();resolve(event.data?.focused===true)};
+  worker.postMessage({type:'JISHI_FOCUS_SELF'},[channel.port2]);
+ });
+}
+function requestPrimaryFocus(){
+ focusRequestId=crypto.randomUUID();
+ focusChannel?.postMessage({type:'focus-request',requestId:focusRequestId});
+}
+if(focusChannel)focusChannel.onmessage=async event=>{
+ const data=event.data;
+ if(data?.type==='focus-request'&&isPrimaryWindow){
+  const focused=await focusPrimaryWindow();focusChannel.postMessage({type:'focus-result',requestId:data.requestId,focused});
+ }
+ if(data?.type==='focus-result'&&!isPrimaryWindow&&data.requestId===focusRequestId){
+  const status=document.querySelector('#single-window-cover p');
+  if(data.focused){if(status)status.textContent='已切换到原窗口。此窗口可以关闭。';window.close()}
+  else if(status)status.textContent='浏览器阻止了自动切换，请从任务栏或标签页切回已打开的记事窗口。';
+ }
+};
+if('launchQueue' in window)window.launchQueue.setConsumer(()=>{if(isPrimaryWindow)focusPrimaryWindow();else requestPrimaryFocus()});
+
 function showWindowBlocked(message){
  const cover=document.createElement('div');cover.id='single-window-cover';
  cover.setAttribute('role','alert');
@@ -179,19 +209,20 @@ function showWindowBlocked(message){
  const text=document.createElement('p');text.textContent=message;
  const retry=document.createElement('button');retry.textContent='重新检测';retry.style.cssText='background:#397bce;color:white;padding:10px 18px;margin:8px;border-radius:6px';retry.onclick=()=>location.reload();
  const close=document.createElement('button');close.textContent='关闭此窗口';close.onclick=()=>{window.close();text.textContent='如果窗口没有自动关闭，请手动关闭此标签页。'};
- card.append(icon,heading,text,retry,close);cover.append(card);document.body.append(cover);
+ const activate=document.createElement('button');activate.textContent='返回已打开窗口';activate.style.cssText=retry.style.cssText;activate.onclick=requestPrimaryFocus;card.append(icon,heading,text,activate,retry,close);cover.append(card);document.body.append(cover);
  document.querySelector('header').inert=true;document.querySelector('main').inert=true;document.querySelector('footer').inert=true;retry.focus();
 }
 if(navigator.locks){
  navigator.locks.request(instanceLock,{mode:'exclusive',ifAvailable:true},async lock=>{
-  if(!lock){showWindowBlocked('请回到原窗口继续使用。关闭原窗口后，点击“重新检测”即可进入。');return}
+  if(!lock){showWindowBlocked('正在切换到已打开的记事窗口…');requestPrimaryFocus();return}
+  isPrimaryWindow=true;
   const hold=new Promise(resolve=>{releaseInstance=resolve});
   try{await startApp();await hold}catch(error){console.error('App startup failed',error);document.body.textContent='页面启动失败，请刷新重试。'}
  });
 }else{
  showWindowBlocked('当前浏览器不支持单窗口锁，请使用最新版 Edge 或 Chrome 打开。');
 }
-window.addEventListener('pagehide',()=>{releaseInstance?.();releaseInstance=null});
+window.addEventListener('pagehide',()=>{isPrimaryWindow=false;releaseInstance?.();releaseInstance=null});
 window.addEventListener('pageshow',event=>{if(event.persisted)location.reload()});
 </script></html>
 
