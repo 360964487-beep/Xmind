@@ -121,7 +121,7 @@ body[data-theme="bold"] #zoom{font-weight:600;color:#3157c9}
 
 .node[aria-level="2"],.node[aria-level="2"]:hover,.node[aria-level="2"].selected,.node[aria-level="2"].selected:hover{font-size:16px;line-height:22px;min-height:34px;padding:5px 11px}
 .node[aria-level="2"] textarea{font-size:16px;line-height:22px}
-</style><header><strong><span class="brand-icon"><img src="icon.svg" alt="" width="30" height="30"></span>记事</strong><button id="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新建</button><button id="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h7l2 3h9l-3 9H3z"/><path d="M3 7V5h7l2 2h7v3"/></svg>打开</button><button id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12l3 3v13H4V4z"/><path d="M8 4v6h8V4M8 20v-7h8v7"/></svg>保存</button><button id="install-app" type="button">安装</button><label class="theme-label" for="theme">主题</label><select id="theme" aria-label="切换主题"><option value="sky">晴空</option><option value="paper">素纸</option><option value="forest">青竹</option><option value="sand">暖砂</option><option value="violet">暮紫</option><option value="night">夜墨</option><option value="dopamine">多巴胺</option><option value="bold">醒目</option></select><span id="status" role="status">示例数据 · 仅保存在本机</span></header><nav id="documents" role="tablist" aria-label="记事文件"></nav><main aria-label="记事画布"><div id="map"><svg aria-hidden="true"></svg><div id="nodes" role="tree" aria-label="记事节点"></div></div></main><footer><span class="help">双击编辑 · Tab 子节点 · Enter 同级 · Delete 删除 · 右键菜单 · 拖动主节点移动整图 · Ctrl＋滚轮缩放 · Ctrl＋V 粘贴 XMind</span><span><button id="minus" aria-label="缩小">−</button><span id="zoom">100%</span><button id="plus" aria-label="放大">＋</button><button id="reset">复位</button></span></footer><input id="file" type="file" accept=".json"><div id="toast" role="status"></div><div id="context" role="menu" aria-label="节点操作" hidden></div><dialog id="move-dialog"><form method="dialog"><label for="move-target">移入哪个节点？</label><select id="move-target"></select><div class="actions"><button value="cancel">取消</button><button id="move-confirm" class="primary" value="confirm">移动</button></div></form></dialog><script>
+</style><header><strong><span class="brand-icon"><img src="icon.svg" alt="" width="30" height="30"></span>记事</strong><button id="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新建</button><button id="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h7l2 3h9l-3 9H3z"/><path d="M3 7V5h7l2 2h7v3"/></svg>打开</button><button id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12l3 3v13H4V4z"/><path d="M8 4v6h8V4M8 20v-7h8v7"/></svg>保存</button><button id="install-app" type="button">安装</button><label class="theme-label" for="theme">主题</label><select id="theme" aria-label="切换主题"><option value="sky">晴空</option><option value="paper">素纸</option><option value="forest">青竹</option><option value="sand">暖砂</option><option value="violet">暮紫</option><option value="night">夜墨</option><option value="dopamine">多巴胺</option><option value="bold">醒目</option></select><span id="status" role="status">示例数据 · 仅保存在本机</span></header><nav id="documents" role="tablist" aria-label="记事文件"></nav><main aria-label="记事画布"><div id="map"><svg aria-hidden="true"></svg><div id="nodes" role="tree" aria-label="记事节点"></div></div></main><footer><span class="help">双击编辑 · Tab 子节点 · Enter 同级 · Delete 删除 · 右键菜单 · 拖动主节点移动整图 · Ctrl＋滚轮缩放 · Ctrl＋V 粘贴 XMind · Ctrl＋Z 撤回</span><span><button id="minus" aria-label="缩小">−</button><span id="zoom">100%</span><button id="plus" aria-label="放大">＋</button><button id="reset">复位</button></span></footer><input id="file" type="file" accept=".json"><div id="toast" role="status"></div><div id="context" role="menu" aria-label="节点操作" hidden></div><dialog id="move-dialog"><form method="dialog"><label for="move-target">移入哪个节点？</label><select id="move-target"></select><div class="actions"><button value="cancel">取消</button><button id="move-confirm" class="primary" value="confirm">移动</button></div></form></dialog><script>
 async function startApp(){
 
 const $=s=>document.querySelector(s);let selected='root',scale=1,editing=false,rootOffset={x:0,y:0};const make=(text,children=[])=>({id:crypto.randomUUID(),text,children});let tree={id:'root',text:'记事',children:[make('苹果手机 ID',[make('daily@example.com',[make('示例密码 123456')]),make('backup@example.com')]),make('微软 Office',[make('work@example.com'),make('https://www.microsoft.com')]),make('VPN',[make('https://example.com'),make('账号：demo@example.com')]),make('眼镜',[make('右眼 400，左眼 350，瞳距 60')]),make('个人信息',[make('电话：138 0000 0000'),make('地址：示例路 24 号'),make('姓名：张三')]),make('GPT',[make('账号：ai@example.com'),make('API KEY：此处填写')])]};
@@ -146,7 +146,7 @@ function renameDocument(id){const doc=workspace.documents.find(d=>d.id===id);if(
 function deleteDocument(id){
  const index=workspace.documents.findIndex(d=>d.id===id);if(index<0)return;
  const doc=workspace.documents[index];
- if(!confirm('删除文件“'+doc.name+'”及其全部节点？此操作无法撤销，请确认已备份。'))return;
+ if(!confirm('删除文件“'+doc.name+'”及其全部节点？可用 Ctrl+Z 撤回。'))return;
  if(editing)document.activeElement.blur();
  currentDocument().root=tree;
  const wasActive=id===workspace.activeDocumentId;
@@ -181,7 +181,26 @@ function renderDocuments(){
  const add=document.createElement('button');add.type='button';add.textContent='＋';add.className='add-document';add.setAttribute('aria-label','新建文件');add.onclick=newDocument;bar.append(add);
 }
 renderDocuments();
-function find(id,n=tree,p=null){if(n.id===id)return {n,p};for(const c of n.children){const r=find(id,c,n);if(r)return r}}function clean(n){return {id:n.id,text:n.text,collapsed:!!n.collapsed,children:n.children.map(clean)}}function persist(){renderDocuments();try{localStorage.setItem('jishi-workspace-v1',JSON.stringify(workspaceData()));$('#status').textContent='全部文件已自动保存'}catch{$('#status').textContent='保存失败，请导出全部文件'}}function toast(t){$('#toast').textContent=t;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',2200)}
+let undoStack=[],redoStack=[],lastHistoryState=JSON.stringify(workspaceData()),restoringHistory=false;
+function rememberChange(snapshot){
+ if(!restoringHistory&&JSON.stringify(JSON.parse(snapshot).documents)!==JSON.stringify(JSON.parse(lastHistoryState).documents)){
+  undoStack.push(lastHistoryState);if(undoStack.length>50)undoStack.shift();redoStack=[];
+ }
+ lastHistoryState=snapshot;
+}
+function restoreHistory(snapshot){
+ restoringHistory=true;
+ try{workspace=JSON.parse(snapshot);tree=currentDocument().root;selected=tree.id;rootOffset={x:0,y:0};closeMenu();persist();render();$('main').scrollTo(0,0);focus()}finally{restoringHistory=false}
+}
+function undoChange(){
+ if(!undoStack.length){toast('没有可撤回的操作');return}
+ redoStack.push(JSON.stringify(workspaceData()));restoreHistory(undoStack.pop());toast('已撤回');
+}
+function redoChange(){
+ if(!redoStack.length){toast('没有可重做的操作');return}
+ undoStack.push(JSON.stringify(workspaceData()));restoreHistory(redoStack.pop());toast('已重做');
+}
+function find(id,n=tree,p=null){if(n.id===id)return {n,p};for(const c of n.children){const r=find(id,c,n);if(r)return r}}function clean(n){return {id:n.id,text:n.text,collapsed:!!n.collapsed,children:n.children.map(clean)}}function persist(){const snapshot=JSON.stringify(workspaceData());rememberChange(snapshot);renderDocuments();try{localStorage.setItem('jishi-workspace-v1',snapshot);$('#status').textContent='全部文件已自动保存'}catch{$('#status').textContent='保存失败，请导出全部文件'}}function toast(t){$('#toast').textContent=t;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',2200)}
 const textMeasure=document.createElement('canvas').getContext('2d');
 function measure(n,d=0){
  textMeasure.font=(d===0?'500':d===1&&document.body.dataset.theme==='bold'?'600':'400')+' '+(d===1?'16':'14')+'px '+getComputedStyle(document.body).fontFamily;
@@ -371,6 +390,14 @@ document.addEventListener('paste',event=>{
  if(!plain.trim()&&!html.trim()){if(clipboard.files.length){event.preventDefault();toast('当前剪贴板只有图片，请在 XMind 中选择节点并复制文字')}return}
  event.preventDefault();closeMenu();pasteOutline(plain,html);
 });
+
+document.addEventListener('keydown',event=>{
+ if(!(event.ctrlKey||event.metaKey)||event.altKey||event.isComposing)return;
+ if(editing||event.target.closest('input,textarea,select,[contenteditable="true"],dialog'))return;
+ const key=event.key.toLowerCase();if(key!=='z'&&key!=='y')return;
+ event.preventDefault();event.stopImmediatePropagation();
+ if(key==='y'||event.shiftKey)redoChange();else undoChange();
+},{capture:true});
 
 }
 const instanceLock='jishi-single-window:'+new URL('./',location.href).pathname;
