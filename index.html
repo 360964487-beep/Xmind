@@ -244,12 +244,7 @@ function buildSaveFilename(account,now=new Date()){
 }
 async function save(){
 if(editing)document.activeElement.blur();
-let previousAccount='';try{previousAccount=localStorage.getItem('jishi-save-account')||''}catch{}
-const account=prompt('账户名称（保存文件将以“账户名-日期”命名）',previousAccount);
-if(account===null)return;
-if(!account.trim()){toast('请输入账户名称');return}
-try{localStorage.setItem('jishi-save-account',account.trim())}catch{}
-const filename=buildSaveFilename(account);
+const filename=buildSaveFilename('账户');
 const content=JSON.stringify(workspaceData(),null,2);
 if(typeof window.showSaveFilePicker==='function'){
  try{
