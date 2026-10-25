@@ -32,3 +32,11 @@ python -m http.server 8080
 ## 图标
 
 原创 SVG 图标以一枚中心节点向右分成两支，搭配蓝、奶黄与粉色，呼应树状记事与多巴胺主题。SVG 同时用于应用标识和浏览器标签图标。
+
+## PWA 安装与离线
+
+通过 HTTPS 或 localhost 打开网站，首次联网加载完成并显示“离线已就绪”后，可以点击顶部“安装”。Edge/Chrome 支持安装为独立窗口；iPhone/iPad 使用 Safari 分享 → 添加到主屏幕。首次打开需要联网，缓存完成后可离线启动与编辑。
+
+发布时必须保留 manifest.webmanifest、sw.js 和 icons/ 目录。相对路径支持 GitHub Pages 的 /Xmind/ 子路径。新版本后台下载后，关闭所有应用窗口并重新打开即可应用更新；修改离线资源时同步递增 sw.js 的 CACHE 版本号。
+
+笔记仍保存在当前站点的本地浏览器存储中，安装不会将 localhost 数据自动迁移到 GitHub Pages。请先从原页面导出 JSON，再在新地址打开文件。
