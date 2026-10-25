@@ -121,6 +121,8 @@ body[data-theme="bold"] #zoom{font-weight:600;color:#3157c9}
 
 .node[aria-level="2"],.node[aria-level="2"]:hover,.node[aria-level="2"].selected,.node[aria-level="2"].selected:hover{font-size:16px;line-height:22px;min-height:34px;padding:5px 11px}
 .node[aria-level="2"] textarea{font-size:16px;line-height:22px}
+
+#documents [role="tab"]{cursor:grab;user-select:none}#documents [role="tab"]:active{cursor:grabbing}#documents .tab-dragging{opacity:.45}#documents [role="tab"].tab-drop-before:before,#documents [role="tab"].tab-drop-after:after{content:'';position:absolute;top:4px;bottom:4px;width:3px;background:var(--t-accent);border-radius:2px;z-index:2}#documents .tab-drop-before:before{left:0}#documents .tab-drop-after:after{right:0}
 </style><header><strong><span class="brand-icon"><img src="icon.svg" alt="" width="30" height="30"></span>记事</strong><button id="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新建</button><button id="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h7l2 3h9l-3 9H3z"/><path d="M3 7V5h7l2 2h7v3"/></svg>打开</button><button id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12l3 3v13H4V4z"/><path d="M8 4v6h8V4M8 20v-7h8v7"/></svg>保存</button><button id="install-app" type="button">安装</button><label class="theme-label" for="theme">主题</label><select id="theme" aria-label="切换主题"><option value="sky">晴空</option><option value="paper">素纸</option><option value="forest">青竹</option><option value="sand">暖砂</option><option value="violet">暮紫</option><option value="night">夜墨</option><option value="dopamine">多巴胺</option><option value="bold">醒目</option></select><span id="status" role="status">示例数据 · 仅保存在本机</span></header><nav id="documents" role="tablist" aria-label="记事文件"></nav><main aria-label="记事画布"><div id="map"><svg aria-hidden="true"></svg><div id="nodes" role="tree" aria-label="记事节点"></div></div></main><footer><span class="help">双击编辑 · Tab 子节点 · Enter 同级 · Delete 删除 · 右键菜单 · 拖动主节点移动整图 · Ctrl＋滚轮缩放 · Ctrl＋V 粘贴 XMind · Ctrl＋Z 撤回</span><span><button id="minus" aria-label="缩小">−</button><span id="zoom">100%</span><button id="plus" aria-label="放大">＋</button><button id="reset">复位</button></span></footer><input id="file" type="file" accept=".json"><div id="toast" role="status"></div><div id="context" role="menu" aria-label="节点操作" hidden></div><dialog id="move-dialog"><form method="dialog"><label for="move-target">移入哪个节点？</label><select id="move-target"></select><div class="actions"><button value="cancel">取消</button><button id="move-confirm" class="primary" value="confirm">移动</button></div></form></dialog><script>
 async function startApp(){
 
@@ -177,7 +179,7 @@ function newDocument(){
 }
 function renderDocuments(){
  const bar=$('#documents');bar.replaceChildren();
- for(const doc of workspace.documents){const tab=document.createElement('button');tab.type='button';tab.textContent=doc.name;tab.setAttribute('role','tab');tab.setAttribute('aria-selected',doc.id===workspace.activeDocumentId);tab.title=doc.name+'（双击改名）';tab.onclick=()=>switchDocument(doc.id);tab.ondblclick=()=>renameDocument(doc.id);tab.oncontextmenu=event=>showDocumentMenu(event,doc.id);tab.onkeydown=e=>{if(e.key==='F2'){e.preventDefault();renameDocument(doc.id)}if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();const index=workspace.documents.indexOf(doc),next=workspace.documents[(index+(e.key==='ArrowRight'?1:-1)+workspace.documents.length)%workspace.documents.length];switchDocument(next.id);[...bar.querySelectorAll('[role="tab"]')][workspace.documents.indexOf(next)]?.focus()}};bar.append(tab)}
+ for(const doc of workspace.documents){const tab=document.createElement('button');tab.type='button';tab.draggable=true;tab.dataset.documentId=doc.id;tab.textContent=doc.name;tab.setAttribute('role','tab');tab.setAttribute('aria-selected',doc.id===workspace.activeDocumentId);tab.title=doc.name+'（拖拽排序，双击改名）';tab.onclick=()=>switchDocument(doc.id);tab.ondblclick=()=>renameDocument(doc.id);tab.oncontextmenu=event=>showDocumentMenu(event,doc.id);tab.onkeydown=e=>{if(e.altKey&&e.shiftKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();const index=workspace.documents.indexOf(doc),target=workspace.documents[index+(e.key==='ArrowRight'?1:-1)];if(target)reorderDocument(doc.id,target.id,e.key==='ArrowRight');return}if(e.key==='F2'){e.preventDefault();renameDocument(doc.id)}if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();const index=workspace.documents.indexOf(doc),next=workspace.documents[(index+(e.key==='ArrowRight'?1:-1)+workspace.documents.length)%workspace.documents.length];switchDocument(next.id);[...bar.querySelectorAll('[role="tab"]')][workspace.documents.indexOf(next)]?.focus()}};bar.append(tab)}
  const add=document.createElement('button');add.type='button';add.textContent='＋';add.className='add-document';add.setAttribute('aria-label','新建文件');add.onclick=newDocument;bar.append(add);
 }
 renderDocuments();
@@ -398,6 +400,40 @@ document.addEventListener('keydown',event=>{
  event.preventDefault();event.stopImmediatePropagation();
  if(key==='y'||event.shiftKey)redoChange();else undoChange();
 },{capture:true});
+
+function moveDocumentItem(documents,id,targetId,after){
+ const from=documents.findIndex(doc=>doc.id===id),target=documents.findIndex(doc=>doc.id===targetId);
+ if(from<0||target<0||from===target)return false;
+ let to=target+(after?1:0);if(from<to)to--;
+ if(to===from)return false;
+ const [item]=documents.splice(from,1);documents.splice(to,0,item);return true;
+}
+function reorderDocument(id,targetId,after){
+ if(!moveDocumentItem(workspace.documents,id,targetId,after))return;
+ persist();const tab=[...$('#documents').querySelectorAll('[role="tab"]')].find(el=>el.dataset.documentId===id);tab?.focus();tab?.scrollIntoView({block:'nearest',inline:'nearest'});toast('文件顺序已调整');
+}
+let draggedDocumentId=null;
+const documentBar=$('#documents');
+function clearDocumentDrop(){documentBar.querySelectorAll('.tab-drop-before,.tab-drop-after').forEach(el=>el.classList.remove('tab-drop-before','tab-drop-after'))}
+documentBar.addEventListener('dragstart',event=>{
+ const tab=event.target.closest('[role="tab"]');if(!tab)return;
+ if(editing)document.activeElement.blur();closeMenu();draggedDocumentId=tab.dataset.documentId;
+ event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',draggedDocumentId);tab.classList.add('tab-dragging');
+});
+documentBar.addEventListener('dragover',event=>{
+ if(!draggedDocumentId)return;event.preventDefault();event.dataTransfer.dropEffect='move';clearDocumentDrop();
+ const tab=event.target.closest('[role="tab"]');if(tab&&tab.dataset.documentId!==draggedDocumentId){const rect=tab.getBoundingClientRect();tab.classList.add(event.clientX<rect.left+rect.width/2?'tab-drop-before':'tab-drop-after')}
+ const bounds=documentBar.getBoundingClientRect();if(event.clientX<bounds.left+32)documentBar.scrollLeft-=16;else if(event.clientX>bounds.right-32)documentBar.scrollLeft+=16;
+});
+documentBar.addEventListener('drop',event=>{
+ if(!draggedDocumentId)return;event.preventDefault();const id=draggedDocumentId;draggedDocumentId=null;
+ const tab=event.target.closest('[role="tab"]');clearDocumentDrop();
+ if(tab){const rect=tab.getBoundingClientRect();reorderDocument(id,tab.dataset.documentId,event.clientX>=rect.left+rect.width/2)}
+ else if(event.target.closest('.add-document')){const last=workspace.documents[workspace.documents.length-1];if(last)reorderDocument(id,last.id,true)}
+ documentBar.querySelectorAll('.tab-dragging').forEach(el=>el.classList.remove('tab-dragging'));
+});
+documentBar.addEventListener('dragend',()=>{draggedDocumentId=null;clearDocumentDrop();documentBar.querySelectorAll('.tab-dragging').forEach(el=>el.classList.remove('tab-dragging'))});
+documentBar.addEventListener('dragleave',event=>{if(!documentBar.contains(event.relatedTarget))clearDocumentDrop()});
 
 }
 const instanceLock='jishi-single-window:'+new URL('./',location.href).pathname;
